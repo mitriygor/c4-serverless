@@ -1,23 +1,17 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
-import 'source-map-support/register'
-//import { parseUserId } from '../../auth/utils'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import 'source-map-support/register';
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 
-
-const docClient = new AWS.DynamoDB.DocumentClient();
+const AWSXRay = require('aws-xray-sdk');
+const AWS = require('aws-sdk');
+const XAWS = AWSXRay.captureAWS(AWS);
+const docClient = new XAWS.DynamoDB.DocumentClient();
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId;
   const updatedTodo: UpdateTodoRequest = JSON.parse(event.body);
 
   const todosTable = process.env.TODOS_TABLE;
-
-  // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
-
-  //const authHeader = event.headers.Authorization
-  //const authSplit = authHeader.split(" ")
-  //const token = authSplit[1]
 
   const updateTodoParams = {
     TableName: todosTable,

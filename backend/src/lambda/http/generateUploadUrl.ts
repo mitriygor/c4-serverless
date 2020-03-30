@@ -1,26 +1,27 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
-import * as uuid from 'uuid'
-import 'source-map-support/register'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import * as uuid from 'uuid';
+import 'source-map-support/register';
 
-
-const docClient = new AWS.DynamoDB.DocumentClient();
+const AWSXRay = require('aws-xray-sdk');
+const AWS = require('aws-sdk');
+const XAWS = AWSXRay.captureAWS(AWS);
+const docClient = new XAWS.DynamoDB.DocumentClient();
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId;
+  console.log('todoId', todoId);
 
-  console.log(todoId);
+
   const bucket = process.env.S3_BUCKET;
-  const url_exp = process.env.SIGNED_URL_EXPIRATION;
+  const url_exp = 300;
   const todosTable = process.env.TODOS_TABLE;
 
   const imageId = uuid.v4();
-
+  console.log('imageId', imageId);
   const s3 = new AWS.S3({
     signatureVersion: 'v4'
   });
 
-  // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
 
   const url = s3.getSignedUrl('putObject',{
     Bucket: bucket,
@@ -29,6 +30,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   });
 
   const imageUrl = `https://${bucket}.s3.amazonaws.com/${imageId}`;
+
+  console.log('imageUrl', imageUrl);
 
   const updateUrlOnTodo = {
     TableName: todosTable,
@@ -39,8 +42,13 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   },
   ReturnValues:"UPDATED_NEW"
   };
+  console.log('updateUrlOnTodo', updateUrlOnTodo);
 
-await docClient.update(updateUrlOnTodo).promise();
+  const runthis = await docClient.update(updateUrlOnTodo).promise().catch(err => {
+    console.log('error', err);
+  });
+
+  console.log('runthis', runthis);
 
   return {
       statusCode: 201,

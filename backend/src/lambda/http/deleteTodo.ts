@@ -1,8 +1,10 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
-import 'source-map-support/register'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import 'source-map-support/register';
 
-const docClient = new AWS.DynamoDB.DocumentClient();
+const AWSXRay = require('aws-xray-sdk');
+const AWS = require('aws-sdk');
+const XAWS = AWSXRay.captureAWS(AWS);
+const docClient = new XAWS.DynamoDB.DocumentClient();
 
 const todosTable = process.env.TODOS_TABLE;
 
